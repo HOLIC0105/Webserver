@@ -7,16 +7,12 @@
 class locker{
   public:
     locker() {
-      if(pthread_mutex_init(&mutex_, NULL) == -1) {
-        throw;
-      } 
+      if(pthread_mutex_in)
     }
 
   private:
     pthread_mutex_t mutex_ ;
 
-}
-
-
+};
 
 #endif // LOCKER_H
