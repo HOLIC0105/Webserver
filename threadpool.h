@@ -14,6 +14,11 @@ class Threadpool{
     Threadpool(int threadnum = 8, int maxrequests = 10000);
     ~Threadpool();
     bool Append(T request);
+
+  private:
+    void run();
+    static void * worker(void *arg);
+  
   private:
     constexpr int threadnum_;
     pthread_t * threads_; 
@@ -41,7 +46,7 @@ Threadpool<T>::Threadpool(int threadnum, int maxrequests) :
     for(int i = 0; i < threadnum_; ++ i) {
       printf("create  the %dth thread\n", i);
 
-      if(pthread_create(threads + i, NULL, worker, NULL) != 0) {
+      if(pthread_create(threads + i, NULL, worker, this) != 0) {
         delete[] threads_;
         throw std::exception();
       }
@@ -63,7 +68,41 @@ Threadpool<T>:: ~Threadpool(){
 template<typename T>
 bool Threadpool<T> :: Append(T request) {
   queuelock_.lock();
+  if(workqueue.size() > maxrequests_) {
+    queuelocker.unlock();
+    return false;
+  }
+  workqueue.push_back(request);
+  queuelock_.unlock();
+  queuestat.post();
+  return true;
+}
 
+template<typename T>
+void * Threadpool<T> :: worker(void * arg) {
+  Threadpool * pool = reinterpret_cast<Threadpool *>(arg);
+  pool->run();
+  return NULL;
+}
+
+template<typename T>
+void Threadpool<T> ::run() {
+  while(!m_stop) {
+    queuestat_.Wait();
+    queuelocker.Lock();
+    if(workqueue.empty()) {
+      queuelocker.Unlock();
+      queuestat_.Post();
+      continue;
+    }
+
+    T request = workqueue.front();
+    workqueue.pop_front();
+    queuelocker.Unlock();
+    if(!request) continue;
+    request->process();
+
+  }
 }
 
 #endif // THREADPOOL_H
