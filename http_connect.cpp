@@ -53,13 +53,13 @@ void http_connect::Process() {
 } // prase http request , generate a response
 
 
-void SetNonBlocking(int fd) {
+void SetNonBlocking(const int & fd) {
   int old_flag = fcntl(fd, F_GETFL);
   int new_flag = old_flag | O_NONBLOCK;
   fcntl(fd, F_SETFL, new_flag);
 }
 
-void AddFd(int epollfd, int fd, bool one_shot) {
+void AddFd(const int & epollfd, const int & fd, const bool & one_shot) {
   epoll_event event;
   event.data.fd = fd;
   event.events = EPOLLIN | EPOLLRDHUP;
@@ -71,16 +71,16 @@ void AddFd(int epollfd, int fd, bool one_shot) {
   epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &event);
 
   SetNonBlocking(fd);
-} //add fd to epoll
+} //向指定epoll中加入新的fd
 
-void RemoveFd(int epollfd, int fd) {
+void RemoveFd(const int & epollfd, const int & fd) {
   epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, NULL);
   close(fd);
-} //remove fd from epoll
+} //将fd从指定epoll删除
 
-void ModifyFd(int epollfd, int fd, int ev) {
+void ModifyFd(const int & epollfd, const int & fd, const int & ev) {
   epoll_event event;
   event.data.fd = fd;
   event.events = ev | EPOLLONESHOT | EPOLLRDHUP;
   epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &event);
-} // Reset EPOLLONESHOT event
+} // 更改fd在epoll中的状态，Reset EPOLLONESHOT event

@@ -11,7 +11,7 @@
 template<typename T> 
 class Threadpool{
   public:
-    Threadpool(int threadnum = 8, int maxrequests = 10000);
+    Threadpool(const int & threadnum = 8, const int &  maxrequests = 10000);
     ~Threadpool();
     bool Append(T *request);
 
@@ -22,7 +22,7 @@ class Threadpool{
   private:
     const int threadnum_;
     pthread_t * threads_; 
-    int maxrequests_;
+    const int maxrequests_;
     Locker queuelock_;
     Sem queuestat_;
     bool stop_;
@@ -30,7 +30,7 @@ class Threadpool{
 };
 
 template<typename T>
-Threadpool<T>::Threadpool(int threadnum, int maxrequests) : 
+Threadpool<T>::Threadpool(const int & threadnum, const int & maxrequests) : 
   threadnum_(threadnum), maxrequests_(maxrequests),
   stop_(false), threads_(NULL) {
 
@@ -50,7 +50,6 @@ Threadpool<T>::Threadpool(int threadnum, int maxrequests) :
         delete[] threads_;
         throw std::exception();
       }
-
       if(pthread_detach(threads_[i]) != 0) {
         delete [] threads_;
         throw std::exception();
@@ -67,8 +66,8 @@ Threadpool<T>:: ~Threadpool(){
 
 template<typename T>
 bool Threadpool<T> :: Append(T *request) {
-  queuelock_.Lock();
-  if(workqueue_.size() > maxrequests_) {
+  queuelock_.Lock(); 
+  if(workqueue_.size() >= maxrequests_) {
     queuelock_.UnLock();
     return false;
   }
@@ -76,7 +75,7 @@ bool Threadpool<T> :: Append(T *request) {
   queuelock_.UnLock();
   queuestat_.Post();
   return true;
-}
+} 
 
 template<typename T>
 void * Threadpool<T> :: worker(void * arg) {

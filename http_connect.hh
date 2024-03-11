@@ -25,9 +25,9 @@ class http_connect{
     sockaddr_in socketfd_addr_;
 };
 
-extern void AddFd(int epollfd, int fd, bool one_shot);
+extern void AddFd(const int & epollfd, const int & fd, const bool & one_shot);
 
-extern void RemoveFd(int epollfd, int fd);
+extern void RemoveFd(const int & epollfd, const int & fd);
 
-extern void ModifyFd(int epollfd, int fd, int ev);
+extern void ModifyFd(const int & epollfd, const int & fd, const int & ev);
 #endif

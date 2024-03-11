@@ -115,7 +115,11 @@ int main(int argc, char* argv[]) {
         users[sockfd].Close_Connect();
       } else if(events[i].events & EPOLLIN) {
         if(users[sockfd].Read()) {
-          pool->Append(users + sockfd);
+          if(pool->Append(users + sockfd)) {
+            //成功加入任务队列
+          } else {
+            //加入任务队列失败
+          }
         } else {
           users[sockfd].Close_Connect(); // ???
         }
