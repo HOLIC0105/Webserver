@@ -17,6 +17,7 @@ void http_connect::Init(const int &sockfd, const sockaddr_in & addr){
 
 void http_connect::Close_Connect() {
   if(socketfd_ != -1) {
+    printf("CLOSE CONNEC\n");
     RemoveFd(epollfd_, socketfd_);
     socketfd_ = -1;
     user_count_ --;
@@ -77,7 +78,7 @@ void RemoveFd(int epollfd, int fd) {
   close(fd);
 } //remove fd from epoll
 
-extern void ModifyFd(int epollfd, int fd, int ev) {
+void ModifyFd(int epollfd, int fd, int ev) {
   epoll_event event;
   event.data.fd = fd;
   event.events = ev | EPOLLONESHOT | EPOLLRDHUP;

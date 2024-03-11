@@ -67,20 +67,23 @@ int main(int argc, char* argv[]) {
 
   epoll_event events[MAX_EVENT_NUM];
   int epollfd = epoll_create1(0);
-
+  http_connect::epollfd_ = epollfd;
+  
   AddFd(epollfd, listenfd, false);
   
-  http_connect::epollfd_ = epollfd;
-
   while(true) {
+    sleep(1);
     int num = epoll_wait(epollfd, events, MAX_EVENT_NUM, -1);
     if(num == -1) {
       if(errno == EINTR) continue;
       perror("epoll_wait");
       exit(-1);
     }
+
     for(int i = 0; i < num; i ++) {
+
       int sockfd = events[i].data.fd;
+      
       if(sockfd == listenfd) {
         sockaddr_in clientaddr;
         socklen_t clientaddr_len = sizeof(clientaddr);
@@ -89,7 +92,11 @@ int main(int argc, char* argv[]) {
           perror("accept");
           exit(-1);
         }
-        
+        char clientip[16];
+        inet_ntop(AF_INET, &clientaddr.sin_addr.s_addr, clientip, sizeof(clientip));
+        int clientport = ntohs(clientaddr.sin_port);
+        printf("connect new\n");
+        printf("client ip : %s , client port : %d\n", clientip, clientport);
         if(http_connect::user_count_ >= MAX_FD) {
           /*
             ...
@@ -104,6 +111,7 @@ int main(int argc, char* argv[]) {
 
         users[clientfd].Init(clientfd, clientaddr);
 
+
       } else if(events[i].events & (EPOLLRDHUP)){ 
         //Exception Disconnect
         users[sockfd].Close_Connect();
@@ -113,6 +121,7 @@ int main(int argc, char* argv[]) {
         } else {
           users[sockfd].Close_Connect(); // ???
         }
+        ModifyFd(epollfd, sockfd, EPOLLIN);
       } else if(events[i].events & EPOLLOUT) {
         if(!users[sockfd].Write()) {
           users[sockfd].Close_Connect(); // ???
