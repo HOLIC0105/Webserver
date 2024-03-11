@@ -13,9 +13,9 @@ class http_connect{
     static int epollfd_;
     static int user_count_;
 
-    http_connect();
-    ~http_connect();
-    void process(); //solve client request
+    http_connect(){};
+    ~http_connect(){};
+    void Process(); //solve client request
     void Init(const int &sockfd, const sockaddr_in & addr);
     void Close_Connect();
     bool Read(); //nonblock read all

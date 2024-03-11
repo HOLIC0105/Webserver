@@ -3,6 +3,11 @@
     "*.tcc": "cpp",
     "compare": "cpp",
     "memory_resource": "cpp",
-    "type_traits": "cpp"
+    "type_traits": "cpp",
+    "deque": "cpp",
+    "list": "cpp",
+    "array": "cpp",
+    "vector": "cpp",
+    "string_view": "cpp"
   }
 }

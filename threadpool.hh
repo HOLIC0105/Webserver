@@ -20,13 +20,13 @@ class Threadpool{
     static void * worker(void *arg);
   
   private:
-    constexpr int threadnum_;
+    const int threadnum_;
     pthread_t * threads_; 
     int maxrequests_;
-    locker queuelock_;
-    sem queuestat_;
+    Locker queuelock_;
+    Sem queuestat_;
     bool stop_;
-    std::list<T *> workqueue;
+    std::list<T *> workqueue_;
 };
 
 template<typename T>
@@ -34,7 +34,7 @@ Threadpool<T>::Threadpool(int threadnum, int maxrequests) :
   threadnum_(threadnum), maxrequests_(maxrequests),
   stop_(false), threads_(NULL) {
 
-    if(threadnum_ <= || maxrequests_ <= 0) {
+    if(threadnum_ <= 0|| maxrequests_ <= 0) {
       throw std::exception();
     }
 
@@ -52,7 +52,7 @@ Threadpool<T>::Threadpool(int threadnum, int maxrequests) :
       }
 
       if(pthread_detach(threads_[i]) != 0) {
-        delete [] thread_;
+        delete [] threads_;
         throw std::exception();
       }
 
@@ -61,20 +61,20 @@ Threadpool<T>::Threadpool(int threadnum, int maxrequests) :
 
 template<typename T>
 Threadpool<T>:: ~Threadpool(){
-  delete [] thread_;
+  delete [] threads_;
   stop_ = true;
 }
 
 template<typename T>
 bool Threadpool<T> :: Append(T *request) {
   queuelock_.Lock();
-  if(workqueue.size() > maxrequests_) {
-    queuelocker.Unlock();
+  if(workqueue_.size() > maxrequests_) {
+    queuelock_.UnLock();
     return false;
   }
-  workqueue.push_back(request);
-  queuelock_.Unlock();
-  queuestat.Post();
+  workqueue_.push_back(request);
+  queuelock_.UnLock();
+  queuestat_.Post();
   return true;
 }
 
@@ -87,12 +87,12 @@ void * Threadpool<T> :: worker(void * arg) {
 
 template<typename T>
 void Threadpool<T> ::run() {
-  while(!m_stop) {
+  while(!stop_) {
     queuestat_.Wait();
-    queuelocker.Lock();
-    T request = workqueue.front();
-    workqueue.pop_front();
-    queuelocker.Unlock();
+    queuelock_.Lock();
+    T * request = workqueue_.front();
+    workqueue_.pop_front();
+    queuelock_.UnLock();
     request->Process();
   }
 }

@@ -1,5 +1,8 @@
 #include "http_connect.hh"
 
+int http_connect :: user_count_ = 0;
+int http_connect :: epollfd_ = -1;
+
 void http_connect::Init(const int &sockfd, const sockaddr_in & addr){
   socketfd_ = sockfd;
   socketfd_addr_ = addr;
@@ -38,7 +41,7 @@ bool http_connect::Write() {
   */
 }
 
-void http_connect::process() {
+void http_connect::Process() {
 
   printf("prase http request , generate a response\n");
    /*

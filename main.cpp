@@ -111,11 +111,11 @@ int main(int argc, char* argv[]) {
         if(users[sockfd].Read()) {
           pool->Append(users + sockfd);
         } else {
-          users[sockfd].Close_Connect() // ???
+          users[sockfd].Close_Connect(); // ???
         }
       } else if(events[i].events & EPOLLOUT) {
         if(!users[sockfd].Write()) {
-          users[sockfd].Close_Connect() // ???
+          users[sockfd].Close_Connect(); // ???
         }
       }
     }
