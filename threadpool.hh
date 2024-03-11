@@ -1,8 +1,8 @@
-#if !defined(THREADPOOL_H)
+#ifndef THREADPOOL_H 
 #define THREADPOOL_H
 
 #include <list>
-#include "locker.h"
+#include "locker.hh"
 #include <exception>
 #include <cstdio>
 #include <pthread.h>
