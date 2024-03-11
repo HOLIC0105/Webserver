@@ -110,7 +110,6 @@ int main(int argc, char* argv[]) {
 
         users[clientfd].Init(clientfd, clientaddr);
 
-
       } else if(events[i].events & (EPOLLRDHUP)){ 
         //Exception Disconnect
         users[sockfd].Close_Connect();
@@ -120,11 +119,12 @@ int main(int argc, char* argv[]) {
         } else {
           users[sockfd].Close_Connect(); // ???
         }
-        ModifyFd(epollfd, sockfd, EPOLLIN);
+        ModifyFd(epollfd, sockfd, EPOLLIN);// Reset EPOLLONESHOT event
       } else if(events[i].events & EPOLLOUT) {
         if(!users[sockfd].Write()) {
           users[sockfd].Close_Connect(); // ???
         }
+         ModifyFd(epollfd, sockfd, EPOLLOUT);// Reset EPOLLONESHOT event
       }
     }
   }
