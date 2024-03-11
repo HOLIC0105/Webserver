@@ -46,7 +46,7 @@ Threadpool<T>::Threadpool(int threadnum, int maxrequests) :
     for(int i = 0; i < threadnum_; ++ i) {
       printf("create  the %dth thread\n", i);
 
-      if(pthread_create(threads + i, NULL, worker, this) != 0) {
+      if(pthread_create(threads_ + i, NULL, worker, this) != 0) {
         delete[] threads_;
         throw std::exception();
       }
@@ -67,14 +67,14 @@ Threadpool<T>:: ~Threadpool(){
 
 template<typename T>
 bool Threadpool<T> :: Append(T request) {
-  queuelock_.lock();
+  queuelock_.Lock();
   if(workqueue.size() > maxrequests_) {
-    queuelocker.unlock();
+    queuelocker.Unlock();
     return false;
   }
   workqueue.push_back(request);
-  queuelock_.unlock();
-  queuestat.post();
+  queuelock_.Unlock();
+  queuestat.Post();
   return true;
 }
 
@@ -90,18 +90,10 @@ void Threadpool<T> ::run() {
   while(!m_stop) {
     queuestat_.Wait();
     queuelocker.Lock();
-    if(workqueue.empty()) {
-      queuelocker.Unlock();
-      queuestat_.Post();
-      continue;
-    }
-
     T request = workqueue.front();
     workqueue.pop_front();
     queuelocker.Unlock();
-    if(!request) continue;
-    request->process();
-
+    request->Process();
   }
 }
 
