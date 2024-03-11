@@ -6,6 +6,7 @@
 #include <cstring>
 #include <cstdlib>
 
+#include <errno.h>
 #include <arpa/inet.h>
 #include <sys/epoll.h>
 #include <signal.h>
@@ -70,6 +71,61 @@ int main(int argc, char* argv[]) {
   AddFd(epollfd, listenfd, false);
   
   http_connect::epollfd_ = epollfd;
+
+  while(true) {
+    int num = epoll_wait(epollfd, events, MAX_EVENT_NUM, -1);
+    if(num == -1) {
+      if(errno == EINTR) continue;
+      perror("epoll_wait");
+      exit(-1);
+    }
+    for(int i = 0; i < num; i ++) {
+      int sockfd = events[i].data.fd;
+      if(sockfd == listenfd) {
+        sockaddr_in clientaddr;
+        socklen_t clientaddr_len = sizeof(clientaddr);
+        int clientfd = accept(listenfd, reinterpret_cast<sockaddr*>(&clientaddr), &clientaddr_len);
+        if(clientfd == -1) {
+          perror("accept");
+          exit(-1);
+        }
+        
+        if(http_connect::user_count_ >= MAX_FD) {
+          /*
+            ...
+            ...
+            ...
+
+
+          */
+          close(clientfd);
+          continue;
+        }
+
+        users[clientfd].Init(clientfd, clientaddr);
+
+      } else if(events[i].events & (EPOLLRDHUP)){ 
+        //Exception Disconnect
+        users[sockfd].Close_Connect();
+      } else if(events[i].events & EPOLLIN) {
+        if(users[sockfd].Read()) {
+          pool->Append(users + sockfd);
+        } else {
+          users[sockfd].Close_Connect() // ???
+        }
+      } else if(events[i].events & EPOLLOUT) {
+        if(!users[sockfd].Write()) {
+          users[sockfd].Close_Connect() // ???
+        }
+      }
+    }
+  }
+
+  close(epollfd);
+  close(listenfd);
+
+  delete [] users;
+  delete pool;
 
   return 0;
 }

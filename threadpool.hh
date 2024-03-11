@@ -13,7 +13,7 @@ class Threadpool{
   public:
     Threadpool(int threadnum = 8, int maxrequests = 10000);
     ~Threadpool();
-    bool Append(T request);
+    bool Append(T *request);
 
   private:
     void run();
@@ -26,7 +26,7 @@ class Threadpool{
     locker queuelock_;
     sem queuestat_;
     bool stop_;
-    std::list<T> workqueue;
+    std::list<T *> workqueue;
 };
 
 template<typename T>
@@ -66,7 +66,7 @@ Threadpool<T>:: ~Threadpool(){
 }
 
 template<typename T>
-bool Threadpool<T> :: Append(T request) {
+bool Threadpool<T> :: Append(T *request) {
   queuelock_.Lock();
   if(workqueue.size() > maxrequests_) {
     queuelocker.Unlock();
