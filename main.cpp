@@ -72,7 +72,6 @@ int main(int argc, char* argv[]) {
   AddFd(epollfd, listenfd, false);
   
   while(true) {
-    sleep(1);
     int num = epoll_wait(epollfd, events, MAX_EVENT_NUM, -1);
     if(num == -1) {
       if(errno == EINTR) continue;
