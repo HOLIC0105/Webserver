@@ -15,4 +15,6 @@ extern void AddFd(int epollfd, int fd, bool one_shot);
 
 extern void RemoveFd(int epollfd, int fd);
 
+extern void ModifyFd(int epollfd, int fd, int ev);
+
 #endif

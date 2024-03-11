@@ -16,3 +16,8 @@ void RemoveFd(int epollfd, int fd) {
   epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, NULL);
   close(fd);
 } //remove fd from epoll
+
+extern void ModifyFd(int epollfd, int fd, int ev) {
+  epoll_event event;
+  event
+}
