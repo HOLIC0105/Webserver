@@ -70,9 +70,9 @@ class http_connect{
     //解析请求行 
     HttpCode ParseRequestLine(char *text);
     //解析请求头
-    HttpCode Parseheaders(char *text);
+    HttpCode ParseHeaders(char *text);
     //解析请求体
-    HttpCode Parsecontent(char *text); 
+    HttpCode ParseContent(char *text); 
     HttpCode DoRequest(); 
     
     //解析一行

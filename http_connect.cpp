@@ -96,7 +96,7 @@ http_connect:: HttpCode http_connect:: ProcessRead() {
         }
         case CHECK_STATE_HEADER:
         {
-          ret = Parseheaders(text);
+          ret = ParseHeaders(text);
           if(ret == BAD_REQUEST) {
             return BAD_REQUEST;
           } else if(ret == GET_REQUEST) {
@@ -106,7 +106,7 @@ http_connect:: HttpCode http_connect:: ProcessRead() {
         }
         case CHECK_STATE_CONTENT:
         {
-          ret = Parsecontent(text);
+          ret = ParseContent(text);
           if(ret == BAD_REQUEST) {
              return BAD_REQUEST;
           } else if(ret == GET_REQUEST) {
@@ -123,6 +123,9 @@ http_connect:: HttpCode http_connect:: ProcessRead() {
   return NO_REQUEST;
 }
 http_connect:: HttpCode http_connect:: ParseRequestLine(char *text) {
+
+
+
   url_ = strpbrk(text, " \t");
 
   *url_ ++ = '\0';
@@ -149,10 +152,10 @@ http_connect:: HttpCode http_connect:: ParseRequestLine(char *text) {
   checkstate_ = CHECK_STATE_HEADER;
   return NO_REQUEST;
 }
-http_connect:: HttpCode http_connect:: Parseheaders(char *text){
+http_connect:: HttpCode http_connect:: ParseHeaders(char *text){
 
 }
-http_connect:: HttpCode http_connect:: Parsecontent(char *text){
+http_connect:: HttpCode http_connect:: ParseContent(char *text){
 
 }
 http_connect:: HttpCode http_connect:: DoRequest(){
