@@ -126,10 +126,34 @@ http_connect:: HttpCode http_connect:: Parseheaders(char *text){
 http_connect:: HttpCode http_connect:: Parsecontent(char *text){
 
 }
-
 http_connect:: HttpCode http_connect:: DoRequest(){
 
 }
+
+http_connect:: LineStatus http_connect:: ParseLine(){
+  char temp;
+  for(; checkidx_ < readidx_; ++ checkidx_) {
+    temp = readbuf_[checkidx_];
+    if(temp == '\r') {
+      if(checkidx_ + 1 == readidx_) {
+        return LINE_OPEN;
+      } else if(readbuf_[checkidx_ + 1] == '\n') {
+        readbuf_[checkidx_ ++] = '\0';
+        readbuf_[checkidx_ ++] = '\0';
+        return LINE_OK;
+      } else return LINE_BAD;
+    } else if(temp == '\n') {
+      if(checkidx_ > 1 && readbuf_[checkidx_ - 1] == '\r') {
+        readbuf_[checkidx_ - 1] = '\0';
+        readbuf_[checkidx_ ++] = '\0';
+        return LINE_OK;
+      }
+      return LINE_BAD;
+    }
+  }
+  return LINE_OPEN;
+}
+
 void http_connect::Process() {
   HttpCode read_ret = ProcessRead();
   if(read_ret == NO_REQUEST) {

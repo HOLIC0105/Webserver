@@ -25,8 +25,10 @@ class http_connect{
     */
     enum ChecktState { CHECK_STATE_REQUESTLINE = 0, CHECK_STATE_HEADER, CHECK_STATE_CONTENT };
 
-    static int epollfd_;  //epoll fd
-    static int user_count_; //已链接个数
+   
+    static int epollfd_;  //epoll文件标志符
+   
+    static int user_count_;  //已链接个数
 
     http_connect(){};
     ~http_connect(){};
@@ -62,12 +64,18 @@ class http_connect{
 
     char * GetLine() {return readbuf_ + startline_;}
 
-    HttpCode ProcessRead(); //解析HTTP请求
-    HttpCode ParseRequestLine(char *text);  //解析请求首行
-    HttpCode Parseheaders(char *text); //解析请求头
-    HttpCode Parsecontent(char *text); //解析请求体
+    //解析HTTP请求;  
+    HttpCode ProcessRead(); 
+    //解析请求首行 
+    HttpCode ParseRequestLine(char *text);
+    //解析请求头
+    HttpCode Parseheaders(char *text);
+    //解析请求体
+    HttpCode Parsecontent(char *text); 
     HttpCode DoRequest(); 
-    LineStatus ParseLine();
+    
+    //解析一行
+    LineStatus ParseLine(); 
 
     int socketfd_;
     sockaddr_in socketfd_addr_;
