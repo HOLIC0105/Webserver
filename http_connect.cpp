@@ -25,13 +25,24 @@ void http_connect::Close_Connect() {
 }
 
 bool http_connect::Read() {
-  printf("READ ALL\n");
+  if(readidx_ >= READ_BUFFER_SIZE_) return false;
+  int bytes_read = 0;
+  while(true) {
+    bytes_read = recv(socketfd_, readbuf_ + readidx_, READ_BUFFER_SIZE_ - readidx_, 0);
+    if(bytes_read == -1) {
+      if(errno == EAGAIN || errno == EWOULDBLOCK) {
+        break; //没有数据
+      }
+      return false;
+    } else if(bytes_read == 0) {
+      //关闭连接
+      return false;
+    }
+    readidx_ += bytes_read;
+  }
+  printf("client date : \n%s\n", readbuf_);
   return true;
-  /*
-    ...
-    ...
-  */
-} 
+}  //循环读取client数据,直到无数据
 
 bool http_connect::Write() {
   printf("WRITE ALL\n");
@@ -43,13 +54,7 @@ bool http_connect::Write() {
 }
 
 void http_connect::Process() {
-
-  printf("prase http request , generate a response\n");
-   /*
-    ...
-    ...
-  */
-
+  ProcessRead();
 } // prase http request , generate a response
 
 

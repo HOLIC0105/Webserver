@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
+#include <iostream>
 
 #include <errno.h>
 #include <arpa/inet.h>
@@ -107,9 +108,7 @@ int main(int argc, char* argv[]) {
           close(clientfd);
           continue;
         }
-
         users[clientfd].Init(clientfd, clientaddr);
-
       } else if(events[i].events & (EPOLLRDHUP)){ 
         //Exception Disconnect
         users[sockfd].Close_Connect();
