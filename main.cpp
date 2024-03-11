@@ -67,5 +67,9 @@ int main(int argc, char* argv[]) {
   epoll_event events[MAX_EVENT_NUM];
   int epollfd = epoll_create1(0);
 
+  AddFd(epollfd, listenfd, false);
+  
+  http_connect::epollfd_ = epollfd;
+
   return 0;
 }

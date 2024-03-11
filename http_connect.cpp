@@ -19,5 +19,7 @@ void RemoveFd(int epollfd, int fd) {
 
 extern void ModifyFd(int epollfd, int fd, int ev) {
   epoll_event event;
-  event
-}
+  event.data.fd = fd;
+  event.events = ev | EPOLLONESHOT | EPOLLRDHUP;
+  epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &event);
+} // Reset EPOLLONESHOT event
