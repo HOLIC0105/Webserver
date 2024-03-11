@@ -23,6 +23,11 @@ void http_connect::Init() {
   checkidx_ = 0;
   startline_ = 0;
   readidx_ = 0;
+  url_ = 0;
+  method_ = GET;
+  version_ = 0;
+  bzero(readbuf_, READ_BUFFER_SIZE_);
+  linger_ = 0;
 }
 
 void http_connect::Close_Connect() {
@@ -118,7 +123,31 @@ http_connect:: HttpCode http_connect:: ProcessRead() {
   return NO_REQUEST;
 }
 http_connect:: HttpCode http_connect:: ParseRequestLine(char *text) {
+  url_ = strpbrk(text, " \t");
 
+  *url_ ++ = '\0';
+
+  char * method = text;
+  if(strcasecmp(method, "GET") == 0) {
+    method_ = GET;
+  } else return BAD_REQUEST;
+
+  version_ = strpbrk(url_, " \t");
+
+  if(!version_) return BAD_REQUEST;
+
+  *version_ ++ = '\0';
+  if(strcasecmp(version_, "HTTP/1.1") != 0) return BAD_REQUEST;
+
+  if(strncasecmp(url_, "http://", 7) == 0) {
+    url_ += 7; // 忽略 http://
+    url_ = strchr(url_, '/');
+  }
+
+  if(!url_ || url_[0] != '/') return BAD_REQUEST;
+
+  checkstate_ = CHECK_STATE_HEADER;
+  return NO_REQUEST;
 }
 http_connect:: HttpCode http_connect:: Parseheaders(char *text){
 

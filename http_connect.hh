@@ -2,6 +2,7 @@
 #define HTTP_CONNECT_H
 
 #include <cstdio>
+#include <cstring>
 
 #include <sys/epoll.h>
 #include <arpa/inet.h>
@@ -66,7 +67,7 @@ class http_connect{
 
     //解析HTTP请求;  
     HttpCode ProcessRead(); 
-    //解析请求首行 
+    //解析请求行 
     HttpCode ParseRequestLine(char *text);
     //解析请求头
     HttpCode Parseheaders(char *text);
@@ -84,10 +85,16 @@ class http_connect{
     int readidx_; //读缓冲区中已经读入的client数据的最后一个字节的下标
     char writebuf_[WRITE_BUFFER_SIZE_];
 
-    int checkidx_; //正在分析的字符在读缓冲区的位置
+    int checkidx_;  //正在分析的字符在读缓冲区的位置
     int startline_; //当前正在解析的行的起始位置
 
     ChecktState checkstate_; //主状态机当前所属状态
+
+    char * url_;     //文件名
+    char * version_; //协议版本 only HTTP1.1
+    Method method_;  //请求方法
+    char * host_;    //主机名
+    bool linger_;    //保持链接
 
 };
 
