@@ -4,6 +4,9 @@ int http_connect :: user_count_ = 0;
 int http_connect :: epollfd_ = -1;
 
 void http_connect::Init(const int &sockfd, const sockaddr_in & addr){
+
+  Init();
+
   socketfd_ = sockfd;
   socketfd_addr_ = addr;
 
@@ -13,6 +16,13 @@ void http_connect::Init(const int &sockfd, const sockaddr_in & addr){
   AddFd(epollfd_, socketfd_, true);
 
   user_count_ ++;
+}
+
+void http_connect::Init() {
+  checkstate_ = CHECK_STATE_REQUESTLINE;
+  checkidx_ = 0;
+  startline_ = 0;
+  readidx_ = 0;
 }
 
 void http_connect::Close_Connect() {
@@ -53,8 +63,79 @@ bool http_connect::Write() {
   */
 }
 
+http_connect:: HttpCode http_connect:: ProcessRead() {
+
+  LineStatus line_status = LINE_OK;
+  HttpCode ret = NO_REQUEST;
+
+  char *text = 0;
+
+  while((checkstate_ == CHECK_STATE_CONTENT && line_status == LINE_OK) //解析到了请求体
+      ||(line_status = ParseLine()) == LINE_OK) { //解析到了一行完整的数据
+
+      text = GetLine();
+
+      startline_ = checkidx_;
+
+      printf("get one http line : %s\n", text);
+
+      switch (checkstate_)
+      {
+        case CHECK_STATE_REQUESTLINE:
+        {
+          ret = ParseRequestLine(text);
+          if(ret == BAD_REQUEST) {
+            return BAD_REQUEST;
+          }
+          break;
+        }
+        case CHECK_STATE_HEADER:
+        {
+          ret = Parseheaders(text);
+          if(ret == BAD_REQUEST) {
+            return BAD_REQUEST;
+          } else if(ret == GET_REQUEST) {
+            return DoRequest();
+          }
+          break;
+        }
+        case CHECK_STATE_CONTENT:
+        {
+          ret = Parsecontent(text);
+          if(ret == BAD_REQUEST) {
+             return BAD_REQUEST;
+          } else if(ret == GET_REQUEST) {
+            return DoRequest();
+          } else line_status = LINE_OPEN;
+          break;
+        }
+        default:
+        {
+          return INTERNAL_ERROR;
+        }
+      }
+  }
+  return NO_REQUEST;
+}
+http_connect:: HttpCode http_connect:: ParseRequestLine(char *text) {
+
+}
+http_connect:: HttpCode http_connect:: Parseheaders(char *text){
+
+}
+http_connect:: HttpCode http_connect:: Parsecontent(char *text){
+
+}
+
+http_connect:: HttpCode http_connect:: DoRequest(){
+
+}
 void http_connect::Process() {
-  ProcessRead();
+  HttpCode read_ret = ProcessRead();
+  if(read_ret == NO_REQUEST) {
+    ModifyFd(epollfd_, socketfd_, EPOLLIN);
+    return;
+  }
 } // prase http request , generate a response
 
 

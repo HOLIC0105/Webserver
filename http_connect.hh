@@ -14,22 +14,72 @@ class http_connect{
     static constexpr int READ_BUFFER_SIZE_ = 2048;
     static constexpr int WRITE_BUFFER_SIZE_ = 2048;
 
+      // HTTP请求方法，这里只支持GET
+    enum Method {GET = 0, POST, HEAD, PUT, DELETE, TRACE, OPTIONS, CONNECT};
+    
+    /*
+        解析客户端请求时，主状态机的状态
+        CHECK_STATE_REQUESTLINE:当前正在分析请求行
+        CHECK_STATE_HEADER:当前正在分析头部字段
+        CHECK_STATE_CONTENT:当前正在解析请求体
+    */
+    enum ChecktState { CHECK_STATE_REQUESTLINE = 0, CHECK_STATE_HEADER, CHECK_STATE_CONTENT };
+
     static int epollfd_;  //epoll fd
     static int user_count_; //已链接个数
 
     http_connect(){};
     ~http_connect(){};
+
     void Process(); //solve client request
     void Init(const int &sockfd, const sockaddr_in & addr);
     void Close_Connect();
     bool Read(); //nonblock read all
     bool Write(); // nonblock write all
+
+    /*
+        服务器处理HTTP请求的可能结果，报文解析的结果
+        NO_REQUEST          :   请求不完整，需要继续读取客户数据
+        GET_REQUEST         :   表示获得了一个完成的客户请求
+        BAD_REQUEST         :   表示客户请求语法错误
+        NO_RESOURCE         :   表示服务器没有资源
+        FORBIDDEN_REQUEST   :   表示客户对资源没有足够的访问权限
+        FILE_REQUEST        :   文件请求,获取文件成功
+        INTERNAL_ERROR      :   表示服务器内部错误
+        CLOSED_CONNECTION   :   表示客户端已经关闭连接了
+    */
+    enum HttpCode { NO_REQUEST, GET_REQUEST, BAD_REQUEST, NO_RESOURCE, FORBIDDEN_REQUEST, FILE_REQUEST, INTERNAL_ERROR, CLOSED_CONNECTION };
+
+    // 从状态机的三种可能状态，即行的读取状态，分别表示
+    // 1.读取到一个完整的行 2.行出错 3.行数据尚且不完整
+    enum LineStatus { LINE_OK = 0, LINE_BAD, LINE_OPEN };
+
+    LineStatus ParseLine();
+
   private:
+
+    void Init();
+
+    char * GetLine() {return readbuf_ + startline_;}
+
+    HttpCode ProcessRead(); //解析HTTP请求
+    HttpCode ParseRequestLine(char *text);  //解析请求首行
+    HttpCode Parseheaders(char *text); //解析请求头
+    HttpCode Parsecontent(char *text); //解析请求体
+    HttpCode DoRequest(); 
+    LineStatus ParseLine();
+
     int socketfd_;
     sockaddr_in socketfd_addr_;
+
     char readbuf_[READ_BUFFER_SIZE_];
     int readidx_; //读缓冲区中已经读入的client数据的最后一个字节的下标
     char writebuf_[WRITE_BUFFER_SIZE_];
+
+    int checkidx_; //正在分析的字符在读缓冲区的位置
+    int startline_; //当前正在解析的行的起始位置
+
+    ChecktState checkstate_; //主状态机当前所属状态
 
 };
 
