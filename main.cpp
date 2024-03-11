@@ -18,7 +18,7 @@ void AddSig(int sig, void (*handle)(int)) {
   struct sigaction sa;
   sa.sa_handler = handle;
   sa.sa_flags = 0;
-  sigfillset(&sa.sa_mask);
+  sigemptyset(&sa.sa_mask);
   sigaction(sig, &sa, NULL);
 }
 
@@ -29,9 +29,9 @@ int main(int argc, char* argv[]) {
     exit(-1);
   }
 
-  int port = atoi(argv[1]);
+  int port = atoi(argv[1]); 
 
-  AddSig(SIGPIPE, SIG_IGN);
+  AddSig(SIGPIPE, SIG_IGN); 
 
   Threadpool<http_connect> * pool = NULL;
   try {
