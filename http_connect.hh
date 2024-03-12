@@ -80,7 +80,6 @@ class http_connect{
 
     char * GetLine() {return readbuf_ + startline_;}
 
-      
     //解析一行
     LineStatus ParseLine();  
     //解析请求行：获得请求方法，目标URL, HTTP版本号
@@ -96,7 +95,10 @@ class http_connect{
     */
     HttpCode DoRequest(); 
     //解析HTTP请求; 
-    HttpCode ProcessRead(); 
+    HttpCode ProcessRead();
+
+    // 往写缓冲中写入待发送的数据
+    bool AddResponse(const char * format, ...);
     // 根据服务器处理HTTP请求的结果，决定返回给客户端的内容
     bool ProcessWrite(HttpCode ret);
 

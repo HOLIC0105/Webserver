@@ -103,6 +103,12 @@ bool http_connect::Write() {
 
 }
 
+bool http_connect::AddResponse(const char * format, ...) {
+  //写入数据太多,断开链接
+  if(writeidx_ >= WRITE_BUFFER_SIZE_) return false; 
+
+}
+
 http_connect:: LineStatus http_connect:: ParseLine(){
   char temp;
   for(; checkidx_ < readidx_; ++ checkidx_) {
@@ -334,7 +340,50 @@ http_connect:: HttpCode http_connect:: ProcessRead() {
 }
 
 bool http_connect:: ProcessWrite(HttpCode ret){
-  
+
+  //  NO_REQUEST, GET_REQUEST, BAD_REQUEST, NO_RESOURCE, FORBIDDEN_REQUEST, FILE_REQUEST, INTERNAL_ERROR, CLOSED_CONNECTION };
+
+  switch(ret) {
+    case NO_REQUEST:
+    { 
+      break;
+    }
+    case GET_REQUEST:
+    {
+
+      break;
+    }
+    case BAD_REQUEST:
+    {
+
+      break;
+    }
+    case NO_RESOURCE:
+    {
+      
+      break;
+    }
+    case FORBIDDEN_REQUEST:
+    {
+
+      break;
+    }
+    case FILE_REQUEST:
+    {
+
+      break;
+    }
+    case INTERNAL_ERROR:
+    {
+
+      break;
+    }
+    case CLOSED_CONNECTION:
+    {
+
+      break;  
+    }
+  }
 };
 
 void http_connect::Process() {
