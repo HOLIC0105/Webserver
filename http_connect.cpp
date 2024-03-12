@@ -88,12 +88,19 @@ bool http_connect::Read() {
 }
 
 bool http_connect::Write() {
-  printf("WRITE ALL\n");
-  return true;
-  /*
-    ...
-    ...
-  */
+
+  int temp = 0;
+
+  if(bytes_to_send_ == 0) {
+    ModifyFd(epollfd_, socketfd_, EPOLLOUT);
+    Init();
+    return true;
+  } // ???????
+
+  while(true) {
+
+  }
+
 }
 
 http_connect:: LineStatus http_connect:: ParseLine(){
@@ -214,7 +221,6 @@ http_connect:: HttpCode http_connect:: ParseHeaders(char *text){
   return NO_REQUEST;
 
 }
-
 //判断是否完整读入
 http_connect:: HttpCode http_connect:: ParseContent(char *text){
 
@@ -327,7 +333,9 @@ http_connect:: HttpCode http_connect:: ProcessRead() {
 
 }
 
-bool ProcessWrite(http_connect::HttpCode a){};
+bool http_connect:: ProcessWrite(HttpCode ret){
+  
+};
 
 void http_connect::Process() {
   //解析HTTP请求

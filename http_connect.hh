@@ -82,17 +82,23 @@ class http_connect{
 
       
     //解析一行
-    LineStatus ParseLine(); 
-    //解析HTTP请求;  
-    HttpCode ProcessRead(); 
+    LineStatus ParseLine();  
     //解析请求行：获得请求方法，目标URL, HTTP版本号
     HttpCode ParseRequestLine(char *text);
     //解析请求头
     HttpCode ParseHeaders(char *text);
     //解析请求体
     HttpCode ParseContent(char *text); 
+    /*
+      当得到一个完整正确的HTTP请求时，分析目标文件的属性,
+      如果目标文件存在、对所有用户可读，且不是目录，
+      则使用mmap将其映射到内存地址m_file_address处.
+    */
     HttpCode DoRequest(); 
-    
+    //解析HTTP请求; 
+    HttpCode ProcessRead(); 
+    // 根据服务器处理HTTP请求的结果，决定返回给客户端的内容
+    bool ProcessWrite(HttpCode ret);
 
     int socketfd_;
     sockaddr_in socketfd_addr_;
@@ -107,8 +113,11 @@ class http_connect{
     struct stat filestat_;                      //目标文件的状态
     char *fileaddress_;                         //目标文件在内存中的起始位置
 
+    int bytes_to_send_;               //将要发送的字节数
+    int bytes_have_send_;             //已经发送的字节数
 
-    ChecktState checkstate_; //主状态机当前所属状态
+
+    ChecktState checkstate_;          //当前所属状态
     
 
     char * url_;                      //文件名
@@ -117,7 +126,7 @@ class http_connect{
     char * host_;                     //主机名
     bool linger_;                     //是否保持链接
     int contentlength_;               //请求消息的总长度
-    std::string fileplace_;    //请求文件的路径
+    std::string fileplace_;           //请求文件的路径
 
 };
 #endif
