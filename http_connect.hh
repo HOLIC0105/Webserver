@@ -5,6 +5,7 @@
 
 #include <cstdio>
 #include <cstring>
+#include <cstdlib>
 
 #include <sys/epoll.h>
 #include <arpa/inet.h>
@@ -13,8 +14,9 @@
 
 class http_connect{
   public:
-    static constexpr int READ_BUFFER_SIZE_ = 2048;
-    static constexpr int WRITE_BUFFER_SIZE_ = 2048;
+    static constexpr int FILENAME_LEN = 128;           //文件名最大长度
+    static constexpr int READ_BUFFER_SIZE_ = 2048;     //读缓冲区的大小
+    static constexpr int WRITE_BUFFER_SIZE_ = 2048;    //写缓冲区的大小
 
     // HTTP请求方法，这里只支持GET
     enum Method {GET = 0, POST, HEAD, PUT, DELETE, TRACE, OPTIONS, CONNECT};
@@ -70,6 +72,9 @@ class http_connect{
 
     char * GetLine() {return readbuf_ + startline_;}
 
+      
+    //解析一行
+    LineStatus ParseLine(); 
     //解析HTTP请求;  
     HttpCode ProcessRead(); 
     //解析请求行：获得请求方法，目标URL, HTTP版本号
@@ -80,8 +85,6 @@ class http_connect{
     HttpCode ParseContent(char *text); 
     HttpCode DoRequest(); 
     
-    //解析一行
-    LineStatus ParseLine(); 
 
     int socketfd_;
     sockaddr_in socketfd_addr_;
@@ -94,12 +97,15 @@ class http_connect{
     int startline_; //当前正在解析的行的起始位置
 
     ChecktState checkstate_; //主状态机当前所属状态
+    
 
-    char * url_;     //文件名
-    char * version_; //协议版本 only HTTP1.1
-    Method method_;  //请求方法
-    char * host_;    //主机名
-    bool linger_;    //保持链接
+    char * url_;                      //文件名
+    Method method_;                   //请求方法
+    char * version_;                  //协议版本 only HTTP1.1
+    char * host_;                     //主机名
+    bool linger_;                     //是否保持链接
+    int contentlength_;               //请求消息的总长度
+    char fileplace_[FILENAME_LEN];    //请求文件的路径
 
 };
 #endif

@@ -119,9 +119,49 @@ http_connect:: HttpCode http_connect:: ParseRequestLine(char *text) {
   return NO_REQUEST;
 
 }
+
 http_connect:: HttpCode http_connect:: ParseHeaders(char *text){
 
+  if(text[0] == '\0') { //空行表示HTTP头部解析完毕
+
+    if(contentlength_ != 0) {
+
+      checkstate_ = CHECK_STATE_CONTENT;
+
+      return NO_REQUEST;
+
+    }
+
+    return GET_REQUEST;
+
+  } else if(strncasecmp(text, "Host:", 5) == 0) {
+
+    text += 5;
+    text += strspn(text, " \t");
+
+    host_ = text;
+
+  } else if(strncasecmp(text, "Connection:", 11) == 0) {
+
+    text += 11;
+    text += strspn(text, " \t");
+    linger_ = strcasecmp(text, "keep-alive") == 0 ? true : false;
+
+  } else if(strncasecmp(text, "Content-Length:", 15) == 0) {
+
+    text += 15;
+    text += strspn(text, " \t");
+
+    contentlength_ = atoi(text);
+
+  } else { 
+    //unknow hreader
+  }
+  
+  return NO_REQUEST;
+
 }
+
 http_connect:: HttpCode http_connect:: ParseContent(char *text){
 
 }
