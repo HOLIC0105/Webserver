@@ -388,7 +388,7 @@ bool http_connect:: AddBlankLine(){
   return AddResponse( "%s", "\r\n" );
 }
 
-bool http_connect:: AddHeaders(const int & content_length ){
+void http_connect:: AddHeaders(const int & content_length ){
     AddContentLength(content_length);
     AddContentType();
     AddLinger();

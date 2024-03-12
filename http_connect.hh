@@ -73,8 +73,6 @@ class http_connect{
     // 1.读取到一个完整的行 2.行出错 3.行数据尚且不完整
     enum LineStatus { LINE_OK = 0, LINE_BAD, LINE_OPEN };
 
-    LineStatus ParseLine();
-
   private:
 
     void Init();
@@ -116,7 +114,7 @@ class http_connect{
     bool  AddBlankLine();   
 
     //写入响应头
-     bool  AddHeaders(const int & content_length );
+    void  AddHeaders(const int & content_length );
 
     //写入响应数据内容
     bool  AddContent(const char* content);
