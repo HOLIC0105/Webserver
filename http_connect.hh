@@ -16,14 +16,14 @@ class http_connect{
     static constexpr int READ_BUFFER_SIZE_ = 2048;
     static constexpr int WRITE_BUFFER_SIZE_ = 2048;
 
-      // HTTP请求方法，这里只支持GET
+    // HTTP请求方法，这里只支持GET
     enum Method {GET = 0, POST, HEAD, PUT, DELETE, TRACE, OPTIONS, CONNECT};
     
     /*
-        解析客户端请求时，主状态机的状态
-        CHECK_STATE_REQUESTLINE:当前正在分析请求行
-        CHECK_STATE_HEADER:当前正在分析头部字段
-        CHECK_STATE_CONTENT:当前正在解析请求体
+        解析客户端请求时的状态
+        CHECK_STATE_REQUESTLINE:正在分析请求行
+        CHECK_STATE_HEADER:正在分析头部字段
+        CHECK_STATE_CONTENT:正在解析请求体
     */
     enum ChecktState { CHECK_STATE_REQUESTLINE = 0, CHECK_STATE_HEADER, CHECK_STATE_CONTENT };
 
@@ -39,8 +39,10 @@ class http_connect{
     void Process(); 
     //初始化新链接
     void Init(const int &sockfd, const sockaddr_in & addr); 
+    //断开链接
     void CloseConnect();
-    bool Read(); //nonblock read all
+    //非阻塞读取client数据,直到无数据
+    bool Read(); 
     bool Write(); // nonblock write all
 
     /*
@@ -70,7 +72,7 @@ class http_connect{
 
     //解析HTTP请求;  
     HttpCode ProcessRead(); 
-    //解析请求行 
+    //解析请求行：获得请求方法，目标URL, HTTP版本号
     HttpCode ParseRequestLine(char *text);
     //解析请求头
     HttpCode ParseHeaders(char *text);
@@ -85,7 +87,7 @@ class http_connect{
     sockaddr_in socketfd_addr_;
 
     char readbuf_[READ_BUFFER_SIZE_];
-    int readidx_; //读缓冲区中已经读入的client数据的最后一个字节的下标
+    int readidx_;   //读缓冲区中已经读入的client数据的endl()
     char writebuf_[WRITE_BUFFER_SIZE_];
 
     int checkidx_;  //正在分析的字符在读缓冲区的位置
