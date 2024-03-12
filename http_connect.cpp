@@ -45,6 +45,15 @@ void http_connect::CloseConnect() {
 
 }
 
+void http_connect::Unmap() {
+  if(fileaddress_) {
+
+    munmap(fileaddress_, filestat_.st_size);
+    fileaddress_ = NULL;
+
+  }
+}
+
 bool http_connect::Read() {
 
   //请求过多，主动断开链接
@@ -226,8 +235,18 @@ http_connect:: HttpCode http_connect:: DoRequest(){
 
   fileplace_ += url_;
 
-  if(stat(fileplace_.c_str(), &filestat_) == -1) return NO_RESOURCE;
+  if(stat(fileplace_.c_str(), &filestat_) == -1) return NO_RESOURCE;   //请求文件是否存在
 
+  if((filestat_.st_mode & S_IROTH) == 0) return FORBIDDEN_REQUEST;     //请求文件是否有读权限
+
+  if(S_ISDIR(filestat_.st_mode)) return BAD_REQUEST;                   //请求文件是否是目录
+
+  int fd = open(fileplace_.c_str(), O_RDONLY);
+
+  fileaddress_ = reinterpret_cast<char *> (mmap(NULL, filestat_.st_size, PROT_READ, MAP_PRIVATE, fd, 0));
+
+  close(fd);
+  return FILE_REQUEST;
 }
 
 http_connect:: HttpCode http_connect:: ProcessRead() {

@@ -131,7 +131,7 @@ int main(int argc, char* argv[]) {
 
       } else if(events[i].events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR)){  //client端已经断开链接
 
-        users[sockfd].Close_Connect();
+        users[sockfd].CloseConnect();
 
       } else if(events[i].events & EPOLLIN) {
 
@@ -141,7 +141,7 @@ int main(int argc, char* argv[]) {
 
         } else {
 
-          users[sockfd].Close_Connect(); 
+          users[sockfd].CloseConnect(); 
 
         }
 
@@ -149,7 +149,7 @@ int main(int argc, char* argv[]) {
 
         if(!users[sockfd].Write()) {
 
-          users[sockfd].Close_Connect();
+          users[sockfd].CloseConnect();
           
         }
 

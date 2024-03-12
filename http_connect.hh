@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <sys/mman.h>
 
 class http_connect{
   public:
@@ -42,10 +43,14 @@ class http_connect{
 
     //处理HTTP请求的入口函数
     void Process(); 
+
     //初始化新链接
     void Init(const int &sockfd, const sockaddr_in & addr); 
     //断开链接
     void CloseConnect();
+    // 对内存映射区执行munmap操作
+    void Unmap();
+
     //非阻塞读取client数据,直到无数据
     bool Read(); 
     bool Write(); // nonblock write all
@@ -100,8 +105,7 @@ class http_connect{
     char writebuf_[WRITE_BUFFER_SIZE_];         //写缓冲区
     int writeidx_;                              //写缓冲区中未发送的字节数
     struct stat filestat_;                      //目标文件的状态
-
-    
+    char *fileaddress_;                         //目标文件在内存中的起始位置
 
 
     ChecktState checkstate_; //主状态机当前所属状态
