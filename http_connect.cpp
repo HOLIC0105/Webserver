@@ -1,5 +1,8 @@
 #include "http_connect.hh"
 
+// 网站的根目录
+const char* doc_root = "/home/nowcoder/webserver/resources";
+
 int http_connect :: user_count_ = 0;
 int http_connect :: epollfd_ = -1;
 
@@ -84,6 +87,47 @@ bool http_connect::Write() {
   */
 }
 
+http_connect:: LineStatus http_connect:: ParseLine(){
+  char temp;
+  for(; checkidx_ < readidx_; ++ checkidx_) {
+
+    temp = readbuf_[checkidx_];
+
+    if(temp == '\r') {
+
+      if(checkidx_ + 1 == readidx_) {
+
+        return LINE_OPEN;
+
+      } else if(readbuf_[checkidx_ + 1] == '\n') {
+
+        readbuf_[checkidx_ ++] = '\0';
+        readbuf_[checkidx_ ++] = '\0';
+
+        return LINE_OK;
+
+      } else return LINE_BAD;
+
+    } else if(temp == '\n') {
+
+      if(checkidx_ > 1 && readbuf_[checkidx_ - 1] == '\r') {
+
+        readbuf_[checkidx_ - 1] = '\0';
+        readbuf_[checkidx_ ++] = '\0';
+        return LINE_OK;
+      
+      }
+
+      return LINE_BAD;
+
+    }
+
+  }
+
+  return LINE_OPEN;
+
+}
+
 http_connect:: HttpCode http_connect:: ParseRequestLine(char *text) {
 
   url_ = strpbrk(text, " \t");
@@ -162,54 +206,29 @@ http_connect:: HttpCode http_connect:: ParseHeaders(char *text){
 
 }
 
+//判断是否完整读入
 http_connect:: HttpCode http_connect:: ParseContent(char *text){
 
+  if(readidx_ >= (contentlength_ + checkidx_)) {
+
+    text[contentlength_] = '\0';
+    return GET_REQUEST;
+
+  }  
+
+  return NO_REQUEST;
+
 }
+
 http_connect:: HttpCode http_connect:: DoRequest(){
+  
+  fileplace_ = doc_root;
+
+  fileplace_ += url_;
+
+  if(stat(fileplace_.c_str(), &filestat_) == -1) return NO_RESOURCE;
 
 }
-
-http_connect:: LineStatus http_connect:: ParseLine(){
-  char temp;
-  for(; checkidx_ < readidx_; ++ checkidx_) {
-
-    temp = readbuf_[checkidx_];
-
-    if(temp == '\r') {
-
-      if(checkidx_ + 1 == readidx_) {
-
-        return LINE_OPEN;
-
-      } else if(readbuf_[checkidx_ + 1] == '\n') {
-
-        readbuf_[checkidx_ ++] = '\0';
-        readbuf_[checkidx_ ++] = '\0';
-
-        return LINE_OK;
-
-      } else return LINE_BAD;
-
-    } else if(temp == '\n') {
-
-      if(checkidx_ > 1 && readbuf_[checkidx_ - 1] == '\r') {
-
-        readbuf_[checkidx_ - 1] = '\0';
-        readbuf_[checkidx_ ++] = '\0';
-        return LINE_OK;
-      
-      }
-
-      return LINE_BAD;
-
-    }
-
-  }
-
-  return LINE_OPEN;
-
-}
-
 
 http_connect:: HttpCode http_connect:: ProcessRead() {
 
@@ -231,7 +250,7 @@ http_connect:: HttpCode http_connect:: ProcessRead() {
     {
 
       case CHECK_STATE_REQUESTLINE:
-      {
+      { 
 
         ret = ParseRequestLine(text);
         if(ret == BAD_REQUEST) {

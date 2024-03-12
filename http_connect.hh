@@ -3,6 +3,8 @@
 
 #include "fdctrl.hh"
 
+#include <string>
+
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
@@ -11,10 +13,11 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 
 class http_connect{
   public:
-    static constexpr int FILENAME_LEN = 128;           //文件名最大长度
     static constexpr int READ_BUFFER_SIZE_ = 2048;     //读缓冲区的大小
     static constexpr int WRITE_BUFFER_SIZE_ = 2048;    //写缓冲区的大小
 
@@ -89,12 +92,17 @@ class http_connect{
     int socketfd_;
     sockaddr_in socketfd_addr_;
 
-    char readbuf_[READ_BUFFER_SIZE_];
-    int readidx_;   //读缓冲区中已经读入的client数据的endl()
-    char writebuf_[WRITE_BUFFER_SIZE_];
+    char readbuf_[READ_BUFFER_SIZE_];           //读缓冲区
+    int readidx_;                               //读缓冲区中已经读入的client数据的endl()
+    int checkidx_;                              //正在分析的字符在读缓冲区的位置   
+    int startline_;                           //当前正在解析的行的起始位置
 
-    int checkidx_;  //正在分析的字符在读缓冲区的位置
-    int startline_; //当前正在解析的行的起始位置
+    char writebuf_[WRITE_BUFFER_SIZE_];         //写缓冲区
+    int writeidx_;                              //写缓冲区中未发送的字节数
+    struct stat filestat_;                      //目标文件的状态
+
+    
+
 
     ChecktState checkstate_; //主状态机当前所属状态
     
@@ -105,7 +113,7 @@ class http_connect{
     char * host_;                     //主机名
     bool linger_;                     //是否保持链接
     int contentlength_;               //请求消息的总长度
-    char fileplace_[FILENAME_LEN];    //请求文件的路径
+    std::string fileplace_;    //请求文件的路径
 
 };
 #endif
