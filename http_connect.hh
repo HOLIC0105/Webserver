@@ -136,6 +136,9 @@ class http_connect{
     int writeidx_;                              //写缓冲区中未发送的字节数
     struct stat filestat_;                      //目标文件的状态
     char *fileaddress_;                         //目标文件在内存中的起始位置
+    struct iovec iv_[2];                        //需写入响应报文的内存块内容
+    int iv_count_;                              //需写入响应报文的内存块个数
+    
 
     int bytes_to_send_;               //将要发送的字节数
     int bytes_have_send_;             //已经发送的字节数

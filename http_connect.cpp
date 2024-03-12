@@ -1,5 +1,16 @@
 #include "http_connect.hh"
 
+// 定义HTTP响应的一些状态信息
+const char* ok_200_title = "OK";
+const char* error_400_title = "Bad Request";
+const char* error_400_form = "Your request has bad syntax or is inherently impossible to satisfy.\n";
+const char* error_403_title = "Forbidden";
+const char* error_403_form = "You do not have permission to get file from this server.\n";
+const char* error_404_title = "Not Found";
+const char* error_404_form = "The requested file was not found on this server.\n";
+const char* error_500_title = "Internal Error";
+const char* error_500_form = "There was an unusual problem serving the requested file.\n";
+
 // 网站的根目录
 const char* doc_root = "/home/nowcoder/webserver/resources";
 
@@ -393,46 +404,58 @@ bool http_connect:: ProcessWrite(const HttpCode & ret){
   //  NO_REQUEST, GET_REQUEST, BAD_REQUEST, NO_RESOURCE, FORBIDDEN_REQUEST, FILE_REQUEST, INTERNAL_ERROR, CLOSED_CONNECTION };
 
   switch(ret) {
-    case NO_REQUEST:
-    { 
-      break;
-    }
-    case GET_REQUEST:
-    {
-
-      break;
-    }
     case BAD_REQUEST:
     {
-
+      AddStatusLine(400, error_400_title);
+      AddHeaders(strlen(error_400_form));
+      if(!AddContent(error_400_form)) return false;
       break;
     }
     case NO_RESOURCE:
     {
-      
+      AddStatusLine(404, error_404_title);
+      AddHeaders(strlen(error_404_form));
+      if(!AddContent(error_404_form)) return false;
       break;
     }
     case FORBIDDEN_REQUEST:
     {
-
+      AddStatusLine(403, error_403_title);
+      AddHeaders(strlen(error_403_form));
+      if(!AddContent(error_403_form)) return false;
       break;
     }
     case FILE_REQUEST:
     {
+      AddStatusLine(200, ok_200_title);
+      AddHeaders(filestat_.st_size);
 
+      iv_[0].iov_base = writebuf_;
+      iv_[0].iov_len = writeidx_;
+      iv_[1].iov_base = fileaddress_;
+      iv_[1].iov_len = filestat_.st_size;
+      iv_count_ = 2;
+      bytes_to_send_ = iv_[0].iov_len + iv_[1].iov_len;
+
+      return true;
       break;
     }
     case INTERNAL_ERROR:
     {
-
+      AddStatusLine(500, error_500_title);
+      AddHeaders(strlen(error_500_form));
+      if(!AddContent(error_500_form)) return false;
       break;
     }
-    case CLOSED_CONNECTION:
-    {
-
-      break;  
-    }
+    default:
+      return false;
   }
+  iv_[0].iov_base = writebuf_;
+  iv_[0].iov_len = writeidx_;
+  iv_count_ = 1;
+  bytes_to_send_ = iv_[0].iov_len;
+
+  return true;
 };
 
 void http_connect::Process() {
