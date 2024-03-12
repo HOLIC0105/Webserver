@@ -12,7 +12,7 @@ const char* error_500_title = "Internal Error";
 const char* error_500_form = "There was an unusual problem serving the requested file.\n";
 
 // 网站的根目录
-const char* doc_root = "/home/nowcoder/webserver/resources";
+const char* doc_root = "/home/holic/webserver/resources";
 
 int http_connect :: user_count_ = 0;
 int http_connect :: epollfd_ = -1;
