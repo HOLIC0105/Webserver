@@ -357,28 +357,35 @@ bool http_connect::AddResponse(const char * format, ...) {
 
 }
 
-bool http_connect:: AddContent(const char* content){
+bool http_connect:: AddStatusLine(const int & status, const char* title){
+  return AddResponse("%s %d %s\r\n", "HTTP/1.1", status, title);
+}
 
+bool http_connect:: AddContentLength(const int & content_length){
+   return AddResponse("Content-Length: %d\r\n", content_length);
 }
 
 bool http_connect:: AddContentType(){
-
+  return AddResponse("Content-Type:%s\r\n", "text/html");
 }
 
-bool http_connect:: AddStatusLine(const int & status, const char* title){
-
-}
-bool http_connect:: AddHeaders(const int & content_length ){
-
-}
-bool http_connect:: AddContentLength(const int & content_length){
-
-}
 bool http_connect:: AddLinger(){
-
+    return AddResponse("Connection: %s\r\n", (linger_ == true ) ? "keep-alive" : "close");
 }
-bool http_connect:: AddBlankLine(){
 
+bool http_connect:: AddBlankLine(){
+  return AddResponse( "%s", "\r\n" );
+}
+
+bool http_connect:: AddHeaders(const int & content_length ){
+    AddContentLength(content_length);
+    AddContentType();
+    AddLinger();
+    AddBlankLine();
+}
+
+bool http_connect:: AddContent(const char* content){
+  return AddResponse("%s", content);
 }
 
 bool http_connect:: ProcessWrite(const HttpCode & ret){

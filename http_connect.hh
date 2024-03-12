@@ -89,32 +89,39 @@ class http_connect{
     HttpCode ParseHeaders(char *text);
     //解析请求体
     HttpCode ParseContent(char *text); 
+
     /*
       当得到一个完整正确的HTTP请求时，分析目标文件的属性,
       如果目标文件存在、对所有用户可读，且不是目录，
       则使用mmap将其映射到内存地址m_file_address处.
     */
     HttpCode DoRequest(); 
+
     //解析HTTP请求; 
     HttpCode ProcessRead();
 
     // 往写缓冲中写入响应数据
     bool AddResponse(const char * format, ...);
-    //写入响应数据内容
-    bool  AddContent(const char* content);
-    //写入响应数据类型
-    bool  AddContentType();
+
     //写入响应行
     bool  AddStatusLine(const int & status, const char* title);
-    //写入响应头
-    bool  AddHeaders(const int & content_length );
+
     //写入响应数据长度
-    bool  AddContentLength(const int & content_length);
+    bool  AddContentLength(const int & content_length); 
+    //写入响应数据类型
+    bool  AddContentType();
     //写入是否保持链接
     bool  AddLinger();
     //写入空号
-    bool  AddBlankLine();
-    // 根据服务器处理HTTP请求的结果，决定返回给客户端的内容
+    bool  AddBlankLine();   
+
+    //写入响应头
+     bool  AddHeaders(const int & content_length );
+
+    //写入响应数据内容
+    bool  AddContent(const char* content);
+
+    // 根据服务器处理HTTP请求的结果，决定返回给客户端的内容 
     bool ProcessWrite(const HttpCode & ret);
 
     int socketfd_;
