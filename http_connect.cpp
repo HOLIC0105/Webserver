@@ -33,15 +33,26 @@ void http_connect::Init(const int &sockfd, const sockaddr_in & addr){
 }
 
 void http_connect::Init() {
+
   checkstate_ = CHECK_STATE_REQUESTLINE;
+  linger_ = false;
   checkidx_ = 0;
   startline_ = 0;
-  readidx_ = 0;
-  url_ = 0;
+
+  url_ = NULL;
   method_ = GET;
-  version_ = 0;
+  version_ = NULL;
+  contentlength_ = 0;
+  host_ = NULL;
+  fileplace_ = "";
+
   bzero(readbuf_, READ_BUFFER_SIZE_);
-  linger_ = 0;
+  readidx_ = 0;
+
+  bzero(writebuf_, WRITE_BUFFER_SIZE_);
+  writeidx_ = 0;
+  bytes_have_send_ = 0;
+  bytes_to_send_ = 0;
 }
 
 void http_connect::CloseConnect() {
@@ -103,12 +114,51 @@ bool http_connect::Write() {
   int temp = 0;
 
   if(bytes_to_send_ == 0) {
-    ModifyFd(epollfd_, socketfd_, EPOLLOUT);
+    ModifyFd(epollfd_, socketfd_, EPOLLIN);
     Init();
     return true;
-  } // ???????
+  } //这次发送的字节为0，响应结束
 
   while(true) {
+    temp = writev(socketfd_, iv_, iv_count_);
+    if(temp == -1) {
+      if(errno == EAGAIN) {
+        ModifyFd(epollfd_, socketfd_, EPOLLOUT);
+        return true;
+      }
+      Unmap();
+      return false;
+    }
+    
+    bytes_have_send_ += temp;
+    bytes_to_send_ -= temp;
+
+    if(bytes_have_send_ >= iv_[0].iov_len) {
+
+      iv_[0].iov_len = 0;
+      iv_[1].iov_base = fileaddress_ + bytes_have_send_ - writeidx_;
+      iv_[1].iov_len = bytes_to_send_;
+
+    } else {
+
+      iv_[0].iov_base = writebuf_ + bytes_have_send_;
+      iv_[0].iov_len = writeidx_ - bytes_have_send_;
+
+    }
+
+    if(bytes_to_send_ <= 0) {
+    
+      Unmap();
+      ModifyFd(epollfd_, socketfd_, EPOLLIN);
+
+      if(linger_) {
+        
+        Init();
+        return true;
+      
+      } else return false; 
+
+    }
 
   }
 
