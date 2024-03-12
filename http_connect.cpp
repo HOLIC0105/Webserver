@@ -103,12 +103,6 @@ bool http_connect::Write() {
 
 }
 
-bool http_connect::AddResponse(const char * format, ...) {
-  //写入数据太多,断开链接
-  if(writeidx_ >= WRITE_BUFFER_SIZE_) return false; 
-
-}
-
 http_connect:: LineStatus http_connect:: ParseLine(){
   char temp;
   for(; checkidx_ < readidx_; ++ checkidx_) {
@@ -339,7 +333,55 @@ http_connect:: HttpCode http_connect:: ProcessRead() {
 
 }
 
-bool http_connect:: ProcessWrite(HttpCode ret){
+bool http_connect::AddResponse(const char * format, ...) {
+  //写入数据太多,断开链接
+  if(writeidx_ >= WRITE_BUFFER_SIZE_) return false; 
+
+  va_list arg_list;
+  va_start(arg_list, format);
+
+  /*
+    若生成字符串的长度大于size，则将字符串的前size个字符复制到str，
+    同时将原串的长度返回（不包含终止符），这里原串可能大于size，
+  */
+  int len = vsnprintf(writebuf_ + writeidx_, WRITE_BUFFER_SIZE_ - writeidx_ - 1, format, arg_list); 
+
+  if(len >= WRITE_BUFFER_SIZE_ - writeidx_ - 1) {
+    return false;
+  }
+
+  writeidx_ += len;
+  va_end(arg_list);
+
+  return true;
+
+}
+
+bool http_connect:: AddContent(const char* content){
+
+}
+
+bool http_connect:: AddContentType(){
+
+}
+
+bool http_connect:: AddStatusLine(const int & status, const char* title){
+
+}
+bool http_connect:: AddHeaders(const int & content_length ){
+
+}
+bool http_connect:: AddContentLength(const int & content_length){
+
+}
+bool http_connect:: AddLinger(){
+
+}
+bool http_connect:: AddBlankLine(){
+
+}
+
+bool http_connect:: ProcessWrite(const HttpCode & ret){
 
   //  NO_REQUEST, GET_REQUEST, BAD_REQUEST, NO_RESOURCE, FORBIDDEN_REQUEST, FILE_REQUEST, INTERNAL_ERROR, CLOSED_CONNECTION };
 

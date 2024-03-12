@@ -8,6 +8,7 @@
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
+#include <cstdarg>
 
 #include <sys/epoll.h>
 #include <arpa/inet.h>
@@ -97,10 +98,24 @@ class http_connect{
     //解析HTTP请求; 
     HttpCode ProcessRead();
 
-    // 往写缓冲中写入待发送的数据
+    // 往写缓冲中写入响应数据
     bool AddResponse(const char * format, ...);
+    //写入响应数据内容
+    bool  AddContent(const char* content);
+    //写入响应数据类型
+    bool  AddContentType();
+    //写入响应行
+    bool  AddStatusLine(const int & status, const char* title);
+    //写入响应头
+    bool  AddHeaders(const int & content_length );
+    //写入响应数据长度
+    bool  AddContentLength(const int & content_length);
+    //写入是否保持链接
+    bool  AddLinger();
+    //写入空号
+    bool  AddBlankLine();
     // 根据服务器处理HTTP请求的结果，决定返回给客户端的内容
-    bool ProcessWrite(HttpCode ret);
+    bool ProcessWrite(const HttpCode & ret);
 
     int socketfd_;
     sockaddr_in socketfd_addr_;
