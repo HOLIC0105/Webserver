@@ -1,12 +1,13 @@
 #ifndef HTTP_CONNECT_H
 #define HTTP_CONNECT_H
 
+#include "fdctrl.hh"
+
 #include <cstdio>
 #include <cstring>
 
 #include <sys/epoll.h>
 #include <arpa/inet.h>
-#include <fcntl.h>
 #include <errno.h>
 #include <unistd.h>
 
@@ -34,9 +35,11 @@ class http_connect{
     http_connect(){};
     ~http_connect(){};
 
-    void Process(); //solve client request
-    void Init(const int &sockfd, const sockaddr_in & addr);
-    void Close_Connect();
+    //处理HTTP请求的入口函数
+    void Process(); 
+    //初始化新链接
+    void Init(const int &sockfd, const sockaddr_in & addr); 
+    void CloseConnect();
     bool Read(); //nonblock read all
     bool Write(); // nonblock write all
 
@@ -97,10 +100,4 @@ class http_connect{
     bool linger_;    //保持链接
 
 };
-
-extern void AddFd(const int & epollfd, const int & fd, const bool & one_shot);
-
-extern void RemoveFd(const int & epollfd, const int & fd);
-
-extern void ModifyFd(const int & epollfd, const int & fd, const int & ev);
 #endif

@@ -30,9 +30,8 @@ void http_connect::Init() {
   linger_ = 0;
 }
 
-void http_connect::Close_Connect() {
+void http_connect::CloseConnect() {
   if(socketfd_ != -1) {
-    printf("CLOSE CONNEC\n");
     RemoveFd(epollfd_, socketfd_);
     socketfd_ = -1;
     user_count_ --;
@@ -78,47 +77,47 @@ http_connect:: HttpCode http_connect:: ProcessRead() {
   while((checkstate_ == CHECK_STATE_CONTENT && line_status == LINE_OK) //解析到了请求体
       ||(line_status = ParseLine()) == LINE_OK) { //解析到了一行完整的数据
 
-      text = GetLine();
+    text = GetLine();
 
-      startline_ = checkidx_;
+    startline_ = checkidx_;
 
-      printf("get one http line : %s\n", text);
+    printf("get one http line : %s\n", text);
 
-      switch (checkstate_)
+    switch (checkstate_)
+    {
+      case CHECK_STATE_REQUESTLINE:
       {
-        case CHECK_STATE_REQUESTLINE:
-        {
-          ret = ParseRequestLine(text);
-          if(ret == BAD_REQUEST) {
-            return BAD_REQUEST;
-          }
-          break;
+        ret = ParseRequestLine(text);
+        if(ret == BAD_REQUEST) {
+          return BAD_REQUEST;
         }
-        case CHECK_STATE_HEADER:
-        {
-          ret = ParseHeaders(text);
-          if(ret == BAD_REQUEST) {
-            return BAD_REQUEST;
-          } else if(ret == GET_REQUEST) {
-            return DoRequest();
-          }
-          break;
-        }
-        case CHECK_STATE_CONTENT:
-        {
-          ret = ParseContent(text);
-          if(ret == BAD_REQUEST) {
-             return BAD_REQUEST;
-          } else if(ret == GET_REQUEST) {
-            return DoRequest();
-          } else line_status = LINE_OPEN;
-          break;
-        }
-        default:
-        {
-          return INTERNAL_ERROR;
-        }
+        break;
       }
+      case CHECK_STATE_HEADER:
+      {
+        ret = ParseHeaders(text);
+        if(ret == BAD_REQUEST) {
+          return BAD_REQUEST;
+        } else if(ret == GET_REQUEST) {
+          return DoRequest();
+        }
+        break;
+      }
+      case CHECK_STATE_CONTENT:
+      {
+        ret = ParseContent(text);
+        if(ret == BAD_REQUEST) {
+            return BAD_REQUEST;
+        } else if(ret == GET_REQUEST) {
+          return DoRequest();
+        } else line_status = LINE_OPEN;
+        break;
+      }
+      default:
+      {
+        return INTERNAL_ERROR;
+      }
+    }
   }
   return NO_REQUEST;
 }
@@ -186,43 +185,19 @@ http_connect:: LineStatus http_connect:: ParseLine(){
   return LINE_OPEN;
 }
 
+bool ProcessWrite(http_connect::HttpCode a){};
+
 void http_connect::Process() {
+  //解析HTTP请求
   HttpCode read_ret = ProcessRead();
   if(read_ret == NO_REQUEST) {
     ModifyFd(epollfd_, socketfd_, EPOLLIN);
     return;
   }
-} // prase http request , generate a response
-
-
-void SetNonBlocking(const int & fd) {
-  int old_flag = fcntl(fd, F_GETFL);
-  int new_flag = old_flag | O_NONBLOCK;
-  fcntl(fd, F_SETFL, new_flag);
-}
-
-void AddFd(const int & epollfd, const int & fd, const bool & one_shot) {
-  epoll_event event;
-  event.data.fd = fd;
-  event.events = EPOLLIN | EPOLLRDHUP;
-
-  if(one_shot) {
-    event.events |= EPOLLONESHOT;
-  } //only one thread can solve, need use epoll_ctl to clean this
-
-  epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &event);
-
-  SetNonBlocking(fd);
-} //向指定epoll中加入新的fd
-
-void RemoveFd(const int & epollfd, const int & fd) {
-  epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, NULL);
-  close(fd);
-} //将fd从指定epoll删除
-
-void ModifyFd(const int & epollfd, const int & fd, const int & ev) {
-  epoll_event event;
-  event.data.fd = fd;
-  event.events = ev | EPOLLONESHOT | EPOLLRDHUP;
-  epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &event);
-} // 更改fd在epoll中的状态，Reset EPOLLONESHOT event
+  //生成HTTP响应
+  bool write_ret = ProcessWrite(read_ret);
+  if(!write_ret) {
+    CloseConnect();
+  }
+  ModifyFd(epollfd_, socketfd_, EPOLLOUT);
+} 

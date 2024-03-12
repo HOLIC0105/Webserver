@@ -12,22 +12,26 @@
 #include <sys/epoll.h>
 #include <signal.h>
 
-#define MAX_FD 65535
-#define MAX_EVENT_NUM 65536
+#define MAX_FD 65535        //最大网络链接数
+#define MAX_EVENT_NUM 65536 //最大事件数
 
 void AddSig(int sig, void (*handle)(int)) {
+
   struct sigaction sa;
   sa.sa_handler = handle;
   sa.sa_flags = 0;
   sigemptyset(&sa.sa_mask);
   sigaction(sig, &sa, NULL);
+
 }
 
 int main(int argc, char* argv[]) {
 
   if(argc <= 1) {
+
     printf("need port num\n");
     exit(-1);
+
   }
 
   int port = atoi(argv[1]); 
@@ -36,17 +40,23 @@ int main(int argc, char* argv[]) {
 
   Threadpool<http_connect> * pool = NULL;
   try {
+
     pool = new Threadpool<http_connect>;
+
   } catch(...) {
+
     exit(-1);
+
   }
 
   http_connect * users = new http_connect[MAX_FD];
 
   int listenfd = socket(AF_INET, SOCK_STREAM, 0);
   if(listenfd == -1) {
+
     perror("socket");
     exit(-1);
+
   }
 
   int reuseopt = 1;
@@ -60,8 +70,10 @@ int main(int argc, char* argv[]) {
 
   int ret = bind(listenfd, reinterpret_cast<sockaddr*>(&listenfd_addr), sizeof(listenfd_addr));
   if(ret == -1) {
+
     perror("bind");
     exit(-1);
+
   }
 
   listen(listenfd, 128);
@@ -73,11 +85,15 @@ int main(int argc, char* argv[]) {
   AddFd(epollfd, listenfd, false);
   
   while(true) {
+
     int num = epoll_wait(epollfd, events, MAX_EVENT_NUM, -1);
+
     if(num == -1) {
+
       if(errno == EINTR) continue;
       perror("epoll_wait");
       exit(-1);
+
     }
 
     for(int i = 0; i < num; i ++) {
@@ -85,49 +101,58 @@ int main(int argc, char* argv[]) {
       int sockfd = events[i].data.fd;
       
       if(sockfd == listenfd) {
+
         sockaddr_in clientaddr;
         socklen_t clientaddr_len = sizeof(clientaddr);
         int clientfd = accept(listenfd, reinterpret_cast<sockaddr*>(&clientaddr), &clientaddr_len);
         if(clientfd == -1) {
+
           perror("accept");
           exit(-1);
+
         }
+
         char clientip[16];
         inet_ntop(AF_INET, &clientaddr.sin_addr.s_addr, clientip, sizeof(clientip));
         int clientport = ntohs(clientaddr.sin_port);
+
         printf("connect new\n");
         printf("client ip : %s , client port : %d\n", clientip, clientport);
+
+        //网络连接数过多，直接切断链接
         if(http_connect::user_count_ >= MAX_FD) {
-          /*
-            ...
-            ...
-            ...
 
-
-          */
           close(clientfd);
           continue;
+
         }
+
         users[clientfd].Init(clientfd, clientaddr);
-      } else if(events[i].events & (EPOLLRDHUP)){ 
-        //Exception Disconnect
+
+      } else if(events[i].events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR)){  //client端已经断开链接
+
         users[sockfd].Close_Connect();
+
       } else if(events[i].events & EPOLLIN) {
+
         if(users[sockfd].Read()) {
-          if(pool->Append(users + sockfd)) {
-            //成功加入任务队列
-          } else {
-            //加入任务队列失败
-          }
+          //将成功读取的任务插入threadpool
+          pool->Append(users + sockfd);
+
         } else {
-          users[sockfd].Close_Connect(); // ???
+
+          users[sockfd].Close_Connect(); 
+
         }
-        ModifyFd(epollfd, sockfd, EPOLLIN);// Reset EPOLLONESHOT event
+
       } else if(events[i].events & EPOLLOUT) {
+
         if(!users[sockfd].Write()) {
-          users[sockfd].Close_Connect(); // ???
+
+          users[sockfd].Close_Connect();
+          
         }
-         ModifyFd(epollfd, sockfd, EPOLLOUT);// Reset EPOLLONESHOT event
+
       }
     }
   }
